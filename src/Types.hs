@@ -1,6 +1,7 @@
 module Types where
 
 import Data.Text (Text)
+import Data.Text.Read (double)
 import Data.Time.Calendar
 import Data.Time.Format
 
@@ -15,7 +16,8 @@ type Currency = Text
 data Arg = Arg
   { src    :: Currency    -- ^ "source" currency
   , target :: Currency    -- ^ "target" currency
-  , day    :: (Maybe Day) -- ^ date. TODO: change to a proper date type
+  , day    :: (Maybe Day) -- ^ date.
+  , amount :: Double      -- ^ amount to convert
   } deriving (Eq, Show)
 
 -- | Parse a date as YYYY-MM-DD into a proper day type
@@ -25,3 +27,8 @@ sToDay = readTime defaultTimeLocale "%F"
 -- | Format a day as YYYY-MM-DD
 dayToS :: Day -> String
 dayToS = formatTime defaultTimeLocale "%F"
+
+-- | Try to extract a 'Double' from a 'Text'. Used to parse exchange rates
+--   from the HTML pages.
+readDouble :: Text -> Maybe Double
+readDouble = either (const Nothing) (Just . fst) . double

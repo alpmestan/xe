@@ -5,8 +5,9 @@ import Control.Lens hiding (elements, children)
 import Control.Monad
 import Data.Text.Encoding.Error (lenientDecode)
 import Data.Text.Lazy.Encoding (decodeUtf8With)
-import Data.Text.Read (double)
+import Data.Time.Clock
 import Network.Wreq
+import Numeric
 import Text.Taggy.Lens
 import System.IO
 import System.Exit (exitFailure)
@@ -15,11 +16,6 @@ import Types
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as LT
 import qualified Options.Applicative as O
-
--- | Try to extract a 'Double' from a 'Text'. Used to parse exchange rates
---   from the HTML pages.
-readDouble :: T.Text -> Maybe Double
-readDouble = either (const Nothing) (Just . fst) . double
 
 -- | Given an exchange rates listing page for a given date,
 --   extract this listing as a pair of (currency symbol, rate)
@@ -55,7 +51,7 @@ baseURL :: String
 baseURL = "http://www.xe.com/currencytables/"
 
 urlForArg :: Arg -> String
-urlForArg (Arg srcC _ mdate) =
+urlForArg (Arg srcC _ mdate _) =
   baseURL ++ "?from=" ++ T.unpack srcC
           ++ maybe "" (\d -> "&date=" ++ dayToS d) mdate
 
@@ -71,9 +67,28 @@ main = do
 
   case lookup (target arg) rates of
     Nothing   -> fatal $ "Couldn't find target currency " ++ T.unpack (target arg)
-    Just rate ->
-      putStrLn $ T.unpack (src arg)
-              ++ " to "
-              ++ T.unpack (target arg)
-              ++ ": "
-              ++ show rate
+    Just rate -> formatOutput rate arg >>= putStrLn
+
+formatOutput :: Double -- ^ exchange rate
+             -> Arg    -- ^ parameters of the program
+             -> IO String
+formatOutput rate arg = fmap format getDay
+
+  where getDay = maybe (fmap utctDay getCurrentTime) return (day arg)
+
+        format d = unwords
+          [ showMoney (amount arg)
+          , T.unpack (src arg)
+          , "="
+          , showMoney (amount arg * rate)
+          , T.unpack (target arg)
+          , "(Exchange rate from XE.com on"
+          , dayToS d ++ ":"
+          , "1"
+          , T.unpack (src arg)
+          , "="
+          , show rate
+          , T.unpack (target arg) ++ ")"
+          ]
+
+        showMoney a = showFFloat (Just 2) a ""

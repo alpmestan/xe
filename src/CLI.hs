@@ -1,4 +1,4 @@
-module CLI where
+module CLI (opts) where
 
 import Data.Text (pack)
 import Data.Time.Calendar (Day)
@@ -14,7 +14,10 @@ opts = O.info (parseArg <**> O.helper)
   )
 
 parseArg :: O.Parser Arg
-parseArg = Arg <$> srcCurrency <*> targetCurrency <*> optional date
+parseArg = Arg <$> srcCurrency
+               <*> targetCurrency
+               <*> optional date
+               <*> fmap (maybe 1 id) (optional amountOpt)
 
 srcCurrency :: O.Parser Currency
 srcCurrency = fmap pack . strOption $
@@ -41,3 +44,10 @@ date = fmap sToDay . strOption $
               , "exchange rate"
               ]
      )
+
+amountOpt :: O.Parser Double
+amountOpt = option auto $
+     O.long "amount"
+  <> O.short 'a'
+  <> O.metavar "AMOUNT"
+  <> O.help "(Optional) amount of money in source currency to convert into the target currency. Defaults to 1 unit."
