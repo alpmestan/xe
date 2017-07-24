@@ -2,7 +2,7 @@ name:                xe
 version:             0.1
 synopsis:            Get FX rates from xe.com
 description:         Get FX rates from xe.com
-license:             AllRightsReserved
+license:             BSD3
 license-file:        LICENSE
 author:              Alp Mestanogullari
 maintainer:          alpmestan@gmail.com
