@@ -11,5 +11,5 @@ mkDerivation {
     base lens optparse-applicative taggy-lens text time wreq
   ];
   description = "Get FX rates from xe.com";
-  license = stdenv.lib.licenses.unfree;
+  license = stdenv.lib.licenses.bsd3;
 }
